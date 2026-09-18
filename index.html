@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>攝護腺癌分期決策助手｜Partin + 骨髍掃描 + 達文西</title>
+  <style>
+    :root {
+      --bg: #f3f6f4;
+      --card: #ffffff;
+      --ink: #1c2b24;
+      --muted: #5b6b64;
+      --line: #d7e2dc;
+      --teal: #0f6b57;
+      --teal-d: #0b4f41;
+      --mint: #e7f4ef;
+      --gold: #b8860b;
+      --ok: #1b7a4a;
+      --ok-bg: #e8f7ee;
+      --warn: #9a6b00;
+      --warn-bg: #fff6dd;
+      --bad: #a33b2c;
+      --bad-bg: #fdeceb;
+      --info: #1f4e79;
+      --info-bg: #e8f1fa;
+      --shadow: 0 10px 30px rgba(16, 40, 32, .08);
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: "Iwanami Mincho", "Source Han Serif TC", "Noto Serif TC", "Songti TC", "PMingLiU", Georgia, serif; }
+    body { line-height: 1.55; }
+    .wrap { max-width: 1120px; margin: 0 auto; padding: 28px 18px 64px; }
+    header.app {
+      background: linear-gradient(135deg, #0c3d32 0%, #157a63 58%, #2a9d7c 100%);
+      color: #fff; border-radius: 22px; padding: 28px 28px 24px; box-shadow: var(--shadow);
+    }
+    header.app h1 { margin: 0 0 6px; font-size: 28px; letter-spacing: .04em; font-weight: 700; }
+    header.app p { margin: 0; opacity: .92; font-size: 15px; font-family: "PingFang TC", "Noto Sans TC", sans-serif; }
+    .badge-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+    .pill { font-family: "PingFang TC", "Noto Sans TC", sans-serif; font-size: 12px; background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.28); padding: 4px 10px; border-radius: 999px; }
+    .grid { display: grid; grid-template-columns: 1fr 1.15fr; gap: 18px; margin-top: 18px; }
+    @media (max-width: 920px) { .grid { grid-template-columns: 1fr; } }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 20px; box-shadow: var(--shadow); }
+    h2 { margin: 0 0 14px; font-size: 18px; color: var(--teal-d); }
+    label { display: block; font-family: "PingFang TC", "Noto Sans TC", sans-serif; font-size: 13px; color: var(--muted); margin: 12px 0 6px; }
+    input[type=number], select {
+      width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px;
+      font-size: 16px; background: #fbfdfc; color: var(--ink); font-family: "PingFang TC", "Noto Sans TC", sans-serif;
+    }
+    input:focus, select:focus { outline: 2px solid #9ad7c6; border-color: var(--teal); }
+    .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .checks { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; font-family: "PingFang TC", "Noto Sans TC", sans-serif; font-size: 14px; }
+    .checks label { margin: 0; color: var(--ink); display: flex; gap: 8px; align-items: flex-start; }
+    button.calc {
+      margin-top: 16px; width: 100%; border: 0; border-radius: 12px; padding: 12px 16px;
+      background: var(--teal); color: #fff; font-size: 16px; cursor: pointer;
+      font-family: "PingFang TC", "Noto Sans TC", sans-serif; font-weight: 600;
+    }
+    button.calc:hover { background: var(--teal-d); }
+    .verdict { border-radius: 16px; padding: 16px 16px 14px; margin-bottom: 12px; }
+    .verdict h3 { margin: 0 0 6px; font-size: 20px; }
+    .verdict p { margin: 0; font-family: "PingFang TC", "Noto Sans TC", sans-serif; font-size: 14px; }
+    .ok { background: var(--ok-bg); color: #134e2e; border: 1px solid #b7e2c7; }
+    .warn { background: var(--warn-bg); color: #6a4a00; border: 1px solid #f0d48a; }
+    .bad { background: var(--bad-bg); color: #6d241b; border: 1px solid #f3b6ae; }
+    .info { background: var(--info-bg); color: #163754; border: 1px solid #b9d4ee; }
+    .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 12px 0; }
+    @media (max-width: 640px) { .kpis { grid-template-columns: 1fr 1fr; } }
+    .kpi { background: var(--mint); border-radius: 12px; padding: 10px 8px; text-align: center; }
+    .kpi b { display: block; font-size: 22px; color: var(--teal-d); }
+    .kpi span { font-family: "PingFang TC", "Noto Sans TC", sans-serif; font-size: 12px; color: var(--muted); }
+    .bars { display: flex; flex-direction: column; gap: 8px; margin: 8px 0 14px; }
+    .bar-row { font-family: "PingFang TC", "Noto Sans TC", sans-serif; font-size: 13px; }
+    .bar-lab { display: flex; justify-content: space-between; margin-bottom: 3px; }
+    .track { height: 10px; background: #e6eeea; border-radius: 99px; overflow: hidden; }
+    .fill { height: 100%; border-radius: 99px; }
+    table { width: 100%; border-collapse: collapse; font-family: "PingFang TC", "Noto Sans TC", sans-serif; font-size: 13px; }
+    th, td { border-bottom: 1px solid var(--line); padding: 8px 6px; text-align: left; vertical-align: top; }
+    th { color: var(--muted); font-weight: 600; }
+    .note { font-family: "PingFang TC", "Noto Sans TC", sans-serif; font-size: 12px; color: var(--muted); margin-top: 12px; }
+    .hidden { display: none; }
+    footer { margin-top: 16px; color: var(--muted); font-family: "PingFang TC", "Noto Sans TC", sans-serif; font-size: 12px; }
+    .tag { display: inline-block; font-family: "PingFang TC", "Noto Sans TC", sans-serif; font-size: 12px; padding: 2px 8px; border-radius: 999px; background: #eef3f0; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="app">
+      <h1>攝護腺癌分期決策助手</h1>
+      <p>結合 NCCN / EAU 風險分組、骨髍掃描適應症與 Johns Hopkins Partin Tables（2013，2006–2011 世代），協助判斷能否省略骨髍掃描並討論達文西根除術。</p>
+      <div class="badge-row">
+        <span class="pill">Partin 2013</span>
+        <span class="pill">EAU 2025／NCCN 2026</span>
+        <span class="pill">離線單頁查詢</span>
+        <span class="pill">僅供臨床輔助，非醫療指示</span>
+      </div>
+    </header>
+    <div class="grid">
+      <section class="card">
+        <h2>輸入臨床資料</h2>
+        <div class="row2">
+          <div>
+            <label>PSA（ng/mL）</label>
+            <input id="psa" type="number" min="0" step="0.1" value="6.8" />
+          </div>
+          <div>
+            <label>臨床分期 cT</label>
+            <select id="ct">
+              <option value="T1c">T1c（摸不到，PSA 升高）</option>
+              <option value="T2a">T2a（單側 ≤ 1/2 葉）</option>
+              <option value="T2b">T2b（單側 > 1/2 葉）</option>
+              <option value="T2c">T2c（兩葉可觸及）</option>
+              <option value="T3a">T3a（穿出被膜）</option>
+              <option value="T3b">T3b（精囊侵犯）</option>
+              <option value="T4">T4（侵犯鄰近器官）</option>
+            </select>
+          </div>
+        </div>
+        <label>切片 Grade Group / Gleason</label>
+        <select id="gg">
+          <option value="1">GG 1　Gleason 3+3=6</option>
+          <option value="2">GG 2　Gleason 3+4=7</option>
+          <option value="3">GG 3　Gleason 4+3=7</option>
+          <option value="4">GG 4　Gleason 8</option>
+          <option value="5">GG 5　Gleason 9–10</option>
+        </select>
+        <div class="row2">
+          <div>
+            <label>陽性針數比例（%）</label>
+            <input id="cores" type="number" min="0" max="100" value="25" />
+          </div>
+          <div>
+            <label>預期餘命</label>
+            <select id="life">
+              <option value="gt10" selected>> 10 年</option>
+              <option value="5to10">5–10 年</option>
+              <option value="le5">≤ 5 年</option>
+            </select>
+          </div>
+        </div>
+        <div class="checks">
+          <label><input id="pain" type="checkbox" /> 有持續骨痛、病理性骨折或神經壓迫症狀</label>
+          <label><input id="aspref" type="checkbox" /> 病人傾向積極監測／暫不手術</label>
+        </div>
+        <button class="calc" onclick="run()">計算分期與建議</button>
+        <p class="note">Partin 僅適用臨床侾限性疾病（T1c–T2c）。T3–T4 不套用 Partin，改以高／極高風險路徑處理。</p>
+      </section>
+      <section class="card">
+        <h2>結果</h2>
+        <div id="out" class="hidden"></div>
+        <div id="empty" class="note">左側填完後按「計算」。預設值可直接試算。</div>
+      </section>
+    </div>
+    <section class="card" style="margin-top:18px">
+      <h2>怎麼讀這些數字</h2>
+      <table>
+        <tr><th>項目</th><th>意義</th></tr>
+        <tr><td>器官侾限 OC</td><td>腫瘤仍在攝護腺內，手術根治機會最高。</td></tr>
+        <tr><td>被膜外侵犯 EPE</td><td>穿出被膜；仍常可手術，切緣與神經保留需更審慎。</td></tr>
+        <tr><td>精囊侵犯 SV+</td><td>病理分期升為 pT3b，術後輔助／救援治療機率上升。</td></tr>
+        <tr><td>淋巴結 LN+</td><td>常作為是否做擴大骨盆淋巴結廓清的參考；傳統門檻約 5%。</td></tr>
+      </table>
+      <p class="note">骨髍掃描建議依 EAU 2025／NCCN 2026：無症狀之低風險與良好中風險「不必常規骨髍掃描」；不良中風險考慮影像；高風險／有骨痛則應做。PSMA-PET 在需要分期時優於傳統骨髍掃描。Partin 來源：Eifler JB et al., BJU Int 2013（Johns Hopkins 2006–2011，n=5,629）。此工具不作治療決定，需由泌尿科醫師綜合 MRI、共病與病人偏好。</p>
+    </section>
+    <footer>本地單頁工具 · 資料整理供門診快速對照 · 2026</footer>
+  </div>
+<script>
+const PARTIN = {
+  T1c: {
+    0: {1:[93,7,0,0], 2:[83,15,2,0], 3:[80,17,3,0], 4:[79,18,3,0], 5:[74,20,5,2]},
+    1: {1:[87,12,0,0], 2:[71,25,2,1], 3:[66,27,4,3], 4:[65,28,4,3], 5:[56,29,7,8]},
+    2: {1:[84,15,1,0], 2:[66,29,4,1], 3:[60,31,6,3], 4:[59,32,6,3], 5:[50,32,10,8]},
+    3: {1:[80,18,1,0], 2:[59,34,6,1], 3:[53,35,9,3], 4:[52,36,9,3], 5:[42,36,14,8]},
+    4: {1:[69,27,3,0], 2:[42,42,13,3], 3:[34,38,20,8], 4:[33,39,20,8], 5:[23,33,25,18]}
+  },
+  T2a: {
+    0: {1:[90,10,0,0], 2:[76,22,2,0], 3:[72,24,3,1], 4:[71,24,3,1], 5:[65,27,6,2]},
+    1: {1:[82,18,1,0], 2:[61,34,3,1], 3:[56,35,5,4], 4:[54,36,5,4], 5:[45,36,7,11]},
+    2: {1:[78,21,1,0], 2:[56,38,4,2], 3:[49,39,7,4], 4:[48,40,7,4], 5:[39,39,10,11]},
+    3: {1:[73,26,1,0], 2:[48,43,7,2], 3:[42,43,11,4], 4:[41,43,11,5], 5:[32,41,16,11]},
+    4: {1:[60,36,4,1], 2:[32,48,15,5], 3:[25,42,22,11], 4:[24,42,22,12], 5:[16,36,26,22]}
+  },
+  T2bc: {
+    0: {1:[82,17,1,0], 2:[64,31,4,1], 3:[59,32,6,3], 4:[58,32,6,4], 5:[50,32,10,8]},
+    1: {1:[70,28,2,1], 2:[47,42,7,4], 3:[40,41,11,8], 4:[39,41,11,9], 5:[29,36,14,21]},
+    2: {1:[64,32,2,1], 2:[40,46,9,5], 3:[33,44,14,9], 4:[32,44,14,10], 5:[23,38,18,21]},
+    3: {1:[58,38,4,1], 2:[31,52,12,4], 3:[24,47,19,10], 4:[24,48,18,10], 5:[16,40,23,22]},
+    4: {1:[42,47,9,2], 2:[18,50,22,10], 3:[12,40,28,20], 4:[12,40,28,20], 5:[7,30,30,33]}
+  }
+};
+function psaBin(psa) {
+  if (psa <= 2.5) return 0;
+  if (psa <= 4.0) return 1;
+  if (psa <= 6.0) return 2;
+  if (psa <= 10.0) return 3;
+  return 4;
+}
+function psaBinLabel(b) {
+  return ["0–2.5", "2.6–4.0", "4.1–6.0", "6.1–10.0", ">10"][b];
+}
+function partinStageKey(ct) {
+  if (ct === "T1c") return "T1c";
+  if (ct === "T2a") return "T2a";
+  if (ct === "T2b" || ct === "T2c") return "T2bc";
+  return null;
+}
+function lookupPartin(ct, psa, gg) {
+  const key = partinStageKey(ct);
+  if (!key) return null;
+  const row = PARTIN[key][psaBin(psa)][gg];
+  return { oc: row[0], epe: row[1], sv: row[2], ln: row[3], bin: psaBinLabel(psaBin(psa)) };
+}
+function riskGroup({psa, ct, gg, cores}) {
+  const highT = ["T3a","T3b","T4"].includes(ct);
+  const veryHigh = (ct === "T3b" || ct === "T4") || (gg === 5 && psa > 20) || ([ct === "T3a", gg >= 4, psa > 20].filter(Boolean).length >= 2);
+  if (veryHigh || ct === "T4" || ct === "T3b") return { id: "veryhigh", name: "極高風險", level: 4 };
+  if (highT || gg >= 4 || psa > 20) return { id: "high", name: "高風險", level: 3 };
+  const irf = (["T2b","T2c"].includes(ct) ? 1 : 0) + ((gg === 2 || gg === 3) ? 1 : 0) + ((psa >= 10 && psa <= 20) ? 1 : 0);
+  const unfav = (irf >= 2) || gg === 3 || cores >= 50;
+  if (unfav && irf >= 1) return { id: "u-int", name: "不良中風險", level: 2 };
+  if (irf >= 1) return { id: "f-int", name: "良好中風險", level: 1 };
+  if (gg === 1 && psa < 10) return { id: "low", name: "低風險", level: 0 };
+  return { id: "f-int", name: "良好中風險", level: 1 };
+}
+function recommend(risk, pain, life, aspref, partin) {
+  let bone;
+  if (pain) bone = { cls: "bad", title: "骨髍掃描：建議執行", text: "有骨髍相關症狀時，不論風險分組都應影像檢查（骨髍掃描或 PSMA-PET）。" };
+  else if (risk.level >= 3) bone = { cls: "bad", title: "骨髍掃描／PSMA-PET：建議執行", text: "高風險或極高風險應做轉移篩檢。若可取得，PSMA-PET 可作為傳統骨髍掃描 + CT 的替代。" };
+  else if (risk.level === 2) bone = { cls: "warn", title: "骨髍掃描：考慮執行", text: "不良中風險（尤其 GG 3）EAU 為弱建議：有 PSMA-PET 可做，否則至少腸部骨盆截面影像 ± 骨髍掃描。" };
+  else bone = { cls: "ok", title: "骨髍掃描：通常不必做", text: "無症狀的低風險或良好中風險，EAU 強烈建議不要為分期再做骨髍掃描；骨轉移機率極低。" };
+  let surgery;
+  if (life === "le5") surgery = { cls: "warn", title: "達文西：通常不優先", text: "預期餘命偏短時，根治手術益處有限，較常觀察或荷爾蒙治療。" };
+  else if (aspref && risk.level <= 1) surgery = { cls: "info", title: "達文西：可討論，但積極監測亦合適", text: "低／良好中風險國際上常以積極監測為首選。若病人明確希望根治且餘命足夠，手術仍是標準選項之一。" };
+  else if (risk.level <= 1 && !pain) surgery = { cls: "ok", title: "達文西：可建議討論（不必等骨髍掃描）", text: "轉移機會很低，局部可切除時可直接討論機器人根除術。同時告知積極監測也是合理選項。" };
+  else if (risk.level === 2) surgery = { cls: "warn", title: "達文西：可考慮，建議先補分期影像", text: "不良中風險手術仍常見，但建議至少有骨盆 MRI，並考慮骨髍／PSMA 影像後再排刀。" };
+  else surgery = { cls: "warn", title: "達文西：需先排除轉移", text: "高／極高風險仍可能手術（常合併擴大淋巴廓清），但必須先完成轉移篩檢；若已 M1，根除術不是標準第一線。" };
+  let plnd = "Partin 淋巴結風險低，多數情況可考慮省略或標準廓清，依醫院常規。";
+  if (partin && partin.ln >= 5) plnd = "Partin 預測 LN+ ≥ 5%，多數中心會考慮擴大骨盆淋巴結廓清（ePLND）。";
+  else if (partin && partin.ln >= 2) plnd = "Partin 預測 LN+ 約 2–4%，是否廓清需結合 MRI／nomogram 與術者習慣。";
+  return { bone, surgery, plnd };
+}
+function bar(color, pct) {
+  return `<div class="track"><div class="fill" style="width:${Math.min(pct,100)}%;background:${color}"></div></div>`;
+}
+function run() {
+  const psa = parseFloat(document.getElementById("psa").value);
+  const ct = document.getElementById("ct").value;
+  const gg = parseInt(document.getElementById("gg").value, 10);
+  const cores = parseFloat(document.getElementById("cores").value || "0");
+  const life = document.getElementById("life").value;
+  const pain = document.getElementById("pain").checked;
+  const aspref = document.getElementById("aspref").checked;
+  if (!(psa >= 0) || Number.isNaN(psa)) { alert("請輸入有效 PSA"); return; }
+  const risk = riskGroup({ psa, ct, gg, cores });
+  const partin = lookupPartin(ct, psa, gg);
+  const rec = recommend(risk, pain, life, aspref, partin);
+  const ggLabel = {1:"GG1（3+3）",2:"GG2（3+4）",3:"GG3（4+3）",4:"GG4（8）",5:"GG5（9–10）"}[gg];
+  let partinHtml = "";
+  if (partin) {
+    partinHtml = `
+      <div class="kpis">
+        <div class="kpi"><b>${partin.oc}%</b><span>器官侾限 OC</span></div>
+        <div class="kpi"><b>${partin.epe}%</b><span>被膜外 EPE</span></div>
+        <div class="kpi"><b>${partin.sv}%</b><span>精囊 SV+</span></div>
+        <div class="kpi"><b>${partin.ln}%</b><span>淋巴結 LN+</span></div>
+      </div>
+      <div class="bars">
+        <div class="bar-row"><div class="bar-lab"><span>器官侾限</span><span>${partin.oc}%</span></div>${bar("#0f6b57", partin.oc)}</div>
+        <div class="bar-row"><div class="bar-lab"><span>被膜外侵犯</span><span>${partin.epe}%</span></div>${bar("#d4a017", partin.epe)}</div>
+        <div class="bar-row"><div class="bar-lab"><span>精囊侵犯</span><span>${partin.sv}%</span></div>${bar("#c05621", partin.sv)}</div>
+        <div class="bar-row"><div class="bar-lab"><span>淋巴結轉移</span><span>${partin.ln}%</span></div>${bar("#a33b2c", partin.ln)}</div>
+      </div>
+      <p class="note">查表條件：c${ct}　PSA ${psa}（分箱 ${partin.bin}）　${ggLabel}。</p>
+      <p class="note">${rec.plnd}</p>`;
+  } else {
+    partinHtml = `<p class="note">c${ct} 已超出 Partin 表適用範圍（僅 T1c–T2c）。請依高／極高風險做骨髍與軟組織影像，不要用 Partin 推估病理分期。</p>`;
+  }
+  document.getElementById("out").innerHTML = `
+    <div class="verdict info">
+      <h3>${risk.name} <span class="tag">${ggLabel} · PSA ${psa} · c${ct}</span></h3>
+      <p>陽性針數 ${cores}%　${pain ? "有骨髍症狀" : "無骨髍症狀"}　預期餘命 ${life === "gt10" ? ">10 年" : life === "5to10" ? "5–10 年" : "≤5 年"}</p>
+    </div>
+    <div class="verdict ${rec.bone.cls}"><h3>${rec.bone.title}</h3><p>${rec.bone.text}</p></div>
+    <div class="verdict ${rec.surgery.cls}"><h3>${rec.surgery.title}</h3><p>${rec.surgery.text}</p></div>
+    <h2 style="margin-top:16px">Partin 病理分期預測</h2>
+    ${partinHtml}`;
+  document.getElementById("out").classList.remove("hidden");
+  document.getElementById("empty").classList.add("hidden");
+}
+run();
+</script>
+</body>
+</html>
